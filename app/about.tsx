@@ -10,9 +10,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "~/components/ui/accordion";
-import { MapPin, Phone, Mail, ExternalLink } from "lucide-react-native";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useTheme } from "@react-navigation/native";
 
 export default function AboutScreen() {
+  const { colors } = useTheme();
   const openMap = () => {
     Linking.openURL("https://maps.google.com/?q=Your+Store+Location");
   };
@@ -26,15 +28,20 @@ export default function AboutScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
+    >
       <View className="p-4">
         {/* About Us Section */}
-        <Card className="mb-6">
+        <Card className="mb-6" style={{ backgroundColor: colors.card }}>
           <CardHeader>
-            <CardTitle className="text-center">About Lawazimi</CardTitle>
+            <CardTitle className="text-center" style={{ color: colors.text }}>
+              About Lawazimi
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <Text className="text-center mb-4">
+            <Text className="text-center mb-4" style={{ color: colors.text }}>
               We deliver school tools and books directly to your home, making
               education accessible to everyone.
             </Text>
@@ -44,12 +51,15 @@ export default function AboutScreen() {
                 <AvatarImage source={{ uri: "https://example.com/logo.jpg" }} />
                 <AvatarFallback>LW</AvatarFallback>
               </Avatar>
-              <Text className="text-sm text-muted-foreground">
+              <Text
+                className="text-sm text-muted-foreground"
+                style={{ color: colors.text }}
+              >
                 Founded in 2023
               </Text>
             </View>
 
-            <Text className="mb-2">
+            <Text className="mb-2" style={{ color: colors.text }}>
               Lawazimi is dedicated to providing high-quality educational
               materials and school supplies with convenience and reliability.
               Our mission is to support students and educators by delivering the
@@ -59,108 +69,133 @@ export default function AboutScreen() {
         </Card>
 
         {/* Contact Information */}
-        <Card className="mb-6">
+        <Card className="mb-6" style={{ backgroundColor: colors.card }}>
           <CardHeader>
-            <CardTitle className="text-center">Contact Us</CardTitle>
+            <CardTitle className="text-center" style={{ color: colors.text }}>
+              Contact Us
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <View className="flex-row items-center">
-              <MapPin className="mr-2" size={20} />
-              <Text className="flex-1">
+              <MaterialCommunityIcons
+                name="map-marker-outline"
+                className="mr-2"
+                size={20}
+                color={colors.text}
+              />
+              <Text className="flex-1" style={{ color: colors.text }}>
                 123 Education Street, School District, City
               </Text>
               <Button variant="ghost" onPress={openMap}>
-                <MapPin size={18} />
+                <MaterialCommunityIcons
+                  name="map-marker-outline"
+                  size={18}
+                  color={colors.primary} // Assuming Button ghost variant handles text color correctly or this is an icon-only button
+                />
               </Button>
             </View>
 
             <View className="flex-row items-center">
-              <Phone className="mr-2" size={20} />
-              <Text className="flex-1">+1 234 567 890</Text>
+              <MaterialCommunityIcons
+                name="phone-outline"
+                className="mr-2"
+                size={20}
+                color={colors.text}
+              />
+              <Text className="flex-1" style={{ color: colors.text }}>
+                +1 234 567 890
+              </Text>
               <Button variant="ghost" onPress={callPhone}>
-                <Phone size={18} />
+                <MaterialCommunityIcons
+                  name="phone-outline"
+                  size={18}
+                  color={colors.primary}
+                />
               </Button>
             </View>
 
             <View className="flex-row items-center">
-              <Mail className="mr-2" size={20} />
-              <Text className="flex-1">support@lawazimi.com</Text>
+              <MaterialCommunityIcons
+                name="email-outline"
+                className="mr-2"
+                size={20}
+                color={colors.text}
+              />
+              <Text className="flex-1" style={{ color: colors.text }}>
+                support@lawazimi.com
+              </Text>
               <Button variant="ghost" onPress={sendEmail}>
-                <Mail size={18} />
+                <MaterialCommunityIcons
+                  name="email-outline"
+                  size={18}
+                  color={colors.primary}
+                />
               </Button>
             </View>
           </CardContent>
         </Card>
 
         {/* FAQ Section */}
-        <Card className="mb-6">
+        <Card className="mb-6" style={{ backgroundColor: colors.card }}>
           <CardHeader>
-            <CardTitle className="text-center">
+            <CardTitle className="text-center" style={{ color: colors.text }}>
               Frequently Asked Questions
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Accordion type="single" collapsible>
+            <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
                 <AccordionTrigger>
-                  <Text>How long does delivery take?</Text>
+                  <Text style={{ color: colors.text }}>
+                    What payment methods do you accept?
+                  </Text>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <View>
-                    <Text>
-                      We typically deliver within 24-48 hours of placing your
-                      order, depending on your location and the availability of
-                      items.
-                    </Text>
-                  </View>
+                  <Text style={{ color: colors.text }}>
+                    We accept cash on delivery, and soon major credit cards and
+                    mobile payments.
+                  </Text>
                 </AccordionContent>
               </AccordionItem>
-
               <AccordionItem value="item-2">
                 <AccordionTrigger>
-                  <Text>What payment methods do you accept?</Text>
+                  <Text style={{ color: colors.text }}>
+                    What is your return policy?
+                  </Text>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <View>
-                    <Text>
-                      We accept cash on delivery, credit/debit cards, and mobile
-                      payment options for your convenience.
-                    </Text>
-                  </View>
+                  <Text style={{ color: colors.text }}>
+                    Items can be returned within 7 days of purchase, provided
+                    they are in their original condition.
+                  </Text>
                 </AccordionContent>
               </AccordionItem>
-
               <AccordionItem value="item-3">
                 <AccordionTrigger>
-                  <Text>Can I return items?</Text>
+                  <Text style={{ color: colors.text }}>
+                    How long does delivery take?
+                  </Text>
                 </AccordionTrigger>
                 <AccordionContent>
-                  <View>
-                    <Text>
-                      Yes, unused items in original packaging can be returned
-                      within 14 days of delivery. Please contact our customer
-                      service for the return process.
-                    </Text>
-                  </View>
+                  <Text style={{ color: colors.text }}>
+                    Delivery typically takes 1-2 business days within the city.
+                  </Text>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </CardContent>
         </Card>
 
-        {/* Version Information */}
-        <View className="items-center mb-8">
-          <Text className="text-sm text-muted-foreground">
-            App Version 1.0.0
-          </Text>
-          <Button
-            variant="link"
-            onPress={() => Linking.openURL("https://lawazimi.com")}
-            className="flex-row items-center"
+        {/* Team Section - Optional */}
+        {/* You can add a team section here if desired */}
+
+        <View className="items-center mt-8 mb-4">
+          <Text
+            className="text-sm text-muted-foreground"
+            style={{ color: colors.text }}
           >
-            <Text className="text-primary mr-1">Visit our website</Text>
-            <ExternalLink size={14} />
-          </Button>
+            Lawazimi © {new Date().getFullYear()}
+          </Text>
         </View>
       </View>
     </ScrollView>

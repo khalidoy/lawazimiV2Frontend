@@ -4,7 +4,8 @@ import { Text } from "~/components/ui/text";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
-import { MapPin, User, Calendar, CreditCard } from "lucide-react-native";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useTheme } from "@react-navigation/native";
 
 interface ReviewStepProps {
   onComplete: () => void;
@@ -27,6 +28,8 @@ export default function ReviewStep({
   items,
   images,
 }: ReviewStepProps) {
+  const { colors } = useTheme(); // from @react-navigation/native
+
   // Generate order summary based on props
   const calculateTotals = () => {
     const subtotal = items.reduce((sum, item) => sum + (item.price || 0), 0);
@@ -52,13 +55,18 @@ export default function ReviewStep({
   };
 
   return (
-    <ScrollView className="flex-1 p-4">
-      <Text className="text-xl font-bold mb-4">Review Your Order</Text>
+    <ScrollView
+      className="flex-1 p-4"
+      style={{ backgroundColor: colors.background }}
+    >
+      <Text className="text-xl font-bold mb-4" style={{ color: colors.text }}>
+        Review Your Order
+      </Text>
 
       {/* Order Items */}
-      <Card className="mb-4">
+      <Card className="mb-4" style={{ backgroundColor: colors.card }}>
         <CardHeader>
-          <CardTitle>Items</CardTitle>
+          <CardTitle style={{ color: colors.text }}>Items</CardTitle>
         </CardHeader>
         <CardContent>
           {items.length > 0 ? (
@@ -67,80 +75,145 @@ export default function ReviewStep({
                 key={item.id || index}
                 className="flex-row justify-between mb-2"
               >
-                <Text>1x {item.name}</Text>
-                <Text className="font-semibold">${item.price?.toFixed(2)}</Text>
+                <Text style={{ color: colors.text }}>1x {item.name}</Text>
+                <Text className="font-semibold" style={{ color: colors.text }}>
+                  ${item.price?.toFixed(2)}
+                </Text>
               </View>
             ))
           ) : images.length > 0 ? (
-            <Text>
+            <Text style={{ color: colors.text }}>
               Order based on uploaded image(s) - {images.length} image(s)
             </Text>
           ) : (
-            <Text>No items selected</Text>
+            <Text style={{ color: colors.text }}>No items selected</Text>
           )}
         </CardContent>
       </Card>
 
       {/* Delivery Information */}
-      <Card className="mb-4">
+      <Card className="mb-4" style={{ backgroundColor: colors.card }}>
         <CardHeader>
-          <CardTitle>Delivery Information</CardTitle>
+          <CardTitle style={{ color: colors.text }}>
+            Delivery Information
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <View className="flex-row">
-            <User size={16} className="mr-3" color="#888" />
+          <View className="flex-row items-center">
+            <MaterialCommunityIcons
+              name="account-outline"
+              size={20}
+              className="mr-3"
+              color={colors.text}
+            />
             <View className="flex-1">
-              <Text className="font-medium">
+              <Text className="font-medium" style={{ color: colors.text }}>
                 {customerInfo.name || "Name not provided"}
               </Text>
-              <Text className="text-muted-foreground text-sm">
+              <Text
+                className="text-muted-foreground text-sm"
+                style={{ color: colors.text }}
+              >
                 {customerInfo.phone || "Phone not provided"}
               </Text>
             </View>
           </View>
 
-          <View className="flex-row">
-            <MapPin size={16} className="mr-3" color="#888" />
-            <Text className="flex-1">{formatAddress()}</Text>
+          <View className="flex-row items-center">
+            <MaterialCommunityIcons
+              name="map-marker-outline"
+              size={20}
+              className="mr-3"
+              color={colors.text}
+            />
+            <Text className="flex-1" style={{ color: colors.text }}>
+              {formatAddress()}
+            </Text>
           </View>
 
-          <View className="flex-row">
-            <Calendar size={16} className="mr-3" color="#888" />
-            <Text className="flex-1">Estimated delivery: Tomorrow</Text>
+          <View className="flex-row items-center">
+            <MaterialCommunityIcons
+              name="calendar-blank-outline"
+              size={20}
+              className="mr-3"
+              color={colors.text}
+            />
+            <Text className="flex-1" style={{ color: colors.text }}>
+              Estimated delivery: Tomorrow
+            </Text>
           </View>
 
-          <View className="flex-row">
-            <CreditCard size={16} className="mr-3" color="#888" />
-            <Text className="flex-1">Cash on Delivery</Text>
+          <View className="flex-row items-center">
+            <MaterialCommunityIcons
+              name="credit-card-outline"
+              size={20}
+              className="mr-3"
+              color={colors.text}
+            />
+            <Text className="flex-1" style={{ color: colors.text }}>
+              Cash on Delivery
+            </Text>
           </View>
         </CardContent>
       </Card>
 
       {/* Order Summary */}
-      <Card className="mb-4">
+      <Card className="mb-4" style={{ backgroundColor: colors.card }}>
         <CardHeader>
-          <CardTitle>Order Summary</CardTitle>
+          <CardTitle style={{ color: colors.text }}>Order Summary</CardTitle>
         </CardHeader>
         <CardContent>
           <View className="flex-row justify-between mb-2">
-            <Text className="text-muted-foreground">Subtotal</Text>
-            <Text>${totals.subtotal.toFixed(2)}</Text>
+            <Text
+              className="text-muted-foreground"
+              style={{ color: colors.text }}
+            >
+              Subtotal
+            </Text>
+            <Text style={{ color: colors.text }}>
+              ${totals.subtotal.toFixed(2)}
+            </Text>
           </View>
           <View className="flex-row justify-between mb-2">
-            <Text className="text-muted-foreground">Delivery Fee</Text>
-            <Text>${totals.deliveryFee.toFixed(2)}</Text>
+            <Text
+              className="text-muted-foreground"
+              style={{ color: colors.text }}
+            >
+              Delivery Fee
+            </Text>
+            <Text style={{ color: colors.text }}>
+              ${totals.deliveryFee.toFixed(2)}
+            </Text>
           </View>
 
-          <Separator className="my-2" />
+          <Separator
+            className="my-2"
+            style={{ backgroundColor: colors.border }}
+          />
 
           <View className="flex-row justify-between mt-2">
-            <Text className="font-bold text-lg">Total</Text>
-            <Text className="font-bold text-lg text-primary">
+            <Text className="font-bold text-lg" style={{ color: colors.text }}>
+              Total
+            </Text>
+            <Text
+              className="font-bold text-lg"
+              style={{ color: colors.primary }}
+            >
               ${totals.total.toFixed(2)}
             </Text>
           </View>
         </CardContent>
       </Card>
+
+      {/* Submit Button - Ensure it uses theme colors if it's a custom button */}
+      {/* If using a pre-styled Button from a library, it might adapt automatically or need specific props */}
+      <Button
+        onPress={onComplete}
+        size="lg"
+        className="mt-4 w-full self-center"
+      >
+        <Text>Complete Order</Text>
+      </Button>
     </ScrollView>
   );
 }

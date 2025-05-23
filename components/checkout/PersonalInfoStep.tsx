@@ -3,9 +3,9 @@ import { View, ScrollView } from "react-native";
 import { Text } from "~/components/ui/text";
 import { Input } from "~/components/ui/input";
 import { Card, CardContent } from "~/components/ui/card";
-import { User, Phone, Check } from "lucide-react-native";
-import { useColorScheme } from "~/lib/useColorScheme"; // Import useColorScheme
-import { THEME_COLORS } from "~/lib/constants"; // Import THEME_COLORS
+import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { useColorScheme } from "~/lib/useColorScheme";
+import { NAV_THEME } from "~/lib/constants"; // Use NAV_THEME
 
 interface PersonalInfoStepProps {
   onNext: () => void;
@@ -22,53 +22,131 @@ export default function PersonalInfoStep({
   clientPhone,
   setClientPhone,
 }: PersonalInfoStepProps) {
-  const { isDarkColorScheme } = useColorScheme(); // Get theme status
-  const colors = isDarkColorScheme ? THEME_COLORS.dark : THEME_COLORS.light; // Get current theme colors
+  const { isDarkColorScheme } = useColorScheme();
+  const colors = isDarkColorScheme ? NAV_THEME.dark : NAV_THEME.light; // Use NAV_THEME and its properties
 
   return (
-    <ScrollView className="flex-1 p-4 bg-background">
-      <View className="bg-card rounded-xl p-4 mb-4">
-        <Text className="text-foreground mb-3">
+    <ScrollView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      contentContainerStyle={{ padding: 16 }}
+    >
+      <View
+        style={{
+          backgroundColor: colors.card,
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 16,
+          borderWidth: 1,
+          borderColor: colors.border,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 2,
+          elevation: 1,
+        }}
+      >
+        <Text style={{ color: colors.text, marginBottom: 12, fontSize: 16 }}>
           Remplissez votre nom complet et votre numéro de téléphone.
         </Text>
 
         <View>
-          {/* Removed space-y-5, direct margin will be applied below */}
-          <View className="relative mb-5">
-            {/* Added mb-5 for bottom margin */}
+          <View style={{ position: "relative", marginBottom: 20 }}>
             <Input
               value={clientName}
               onChangeText={setClientName}
               placeholder="Nom complet"
-              className="pl-10 bg-input text-foreground placeholder:text-muted-foreground border-border"
+              style={{
+                paddingLeft: 40,
+                height: 48,
+                fontSize: 16,
+                backgroundColor: colors.background,
+                color: colors.text,
+                borderColor: colors.border,
+                borderWidth: 1,
+                borderRadius: 8,
+              }}
+              placeholderTextColor={colors.border} // Changed from muted-foreground to border for a more subtle placeholder
             />
-            <View className="absolute left-3 top-0 bottom-0 justify-center">
-              <User size={18} color={colors["muted-foreground"]} />
+            <View
+              style={{
+                position: "absolute",
+                left: 12,
+                top: 0,
+                bottom: 0,
+                justifyContent: "center",
+              }}
+            >
+              <Icon name="account-outline" size={20} color={colors.text} />
             </View>
           </View>
-          <View className="relative mb-5">
-            {/* Added mb-5 for bottom margin */}
+          <View style={{ position: "relative", marginBottom: 20 }}>
             <Input
               value={clientPhone}
               onChangeText={setClientPhone}
               placeholder="Numéro de téléphone"
               keyboardType="phone-pad"
-              className="pl-10 bg-input text-foreground placeholder:text-muted-foreground border-border"
+              style={{
+                paddingLeft: 40,
+                height: 48,
+                fontSize: 16,
+                backgroundColor: colors.background,
+                color: colors.text,
+                borderColor: colors.border,
+                borderWidth: 1,
+                borderRadius: 8,
+              }}
+              placeholderTextColor={colors.border} // Changed from muted-foreground to border
             />
-            <View className="absolute left-3 top-0 bottom-0 justify-center">
-              <Phone size={18} color={colors["muted-foreground"]} />
+            <View
+              style={{
+                position: "absolute",
+                left: 12,
+                top: 0,
+                bottom: 0,
+                justifyContent: "center",
+              }}
+            >
+              <Icon name="phone-outline" size={20} color={colors.text} />
             </View>
           </View>
         </View>
       </View>
 
-      <Card className="bg-card border-border">
-        <CardContent className="p-4">
-          <View className="flex-row items-center">
-            <View className="h-6 w-6 rounded-full bg-primary items-center justify-center mr-2">
-              <Check size={16} color={colors["primary-foreground"]} />
+      <Card
+        style={{
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+          borderWidth: 1,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 2,
+          elevation: 1,
+        }}
+      >
+        <CardContent style={{ padding: 16 }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View
+              style={{
+                height: 28,
+                width: 28,
+                borderRadius: 14,
+                backgroundColor: colors.primary,
+                alignItems: "center",
+                justifyContent: "center",
+                marginRight: 12,
+              }}
+            >
+              <Icon name="check-circle-outline" size={18} color={colors.card} />
             </View>
-            <Text className="text-foreground flex-1">
+            <Text
+              style={{
+                color: colors.text,
+                flex: 1,
+                fontSize: 14,
+                lineHeight: 20,
+              }}
+            >
               Nous utilisons vos informations uniquement pour traiter votre
               commande et vous fournir des mises à jour de livraison.
             </Text>

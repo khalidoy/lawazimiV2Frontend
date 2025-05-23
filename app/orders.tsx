@@ -11,7 +11,8 @@ import {
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Clock, CheckCircle, Package } from "lucide-react-native";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useTheme } from "@react-navigation/native";
 
 // Mock data for orders
 const ORDERS = [
@@ -48,6 +49,7 @@ const ORDERS = [
 ];
 
 export default function OrdersScreen() {
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = React.useState("all");
 
   const filteredOrders = React.useMemo(() => {
@@ -59,23 +61,49 @@ export default function OrdersScreen() {
     switch (status) {
       case "delivered":
         return (
-          <Badge className="bg-green-500">
-            <CheckCircle size={14} className="mr-1" />
-            <Text className="text-white">Delivered</Text>
+          <Badge
+            className="bg-green-500"
+            style={{ backgroundColor: colors.primary }}
+          >
+            <MaterialCommunityIcons
+              name="check-circle-outline"
+              size={14}
+              className="mr-1"
+              color={colors.card} // Assuming badge text color should contrast with primary
+            />
+            <Text style={{ color: colors.card }}>Delivered</Text>
           </Badge>
         );
       case "processing":
         return (
-          <Badge className="bg-blue-500">
-            <Package size={14} className="mr-1" />
-            <Text className="text-white">Processing</Text>
+          <Badge
+            className="bg-blue-500"
+            style={{ backgroundColor: colors.primary }}
+          >
+            <MaterialCommunityIcons
+              name="package-variant-closed"
+              size={14}
+              className="mr-1"
+              color={colors.card}
+            />
+            <Text style={{ color: colors.card }}>Processing</Text>
           </Badge>
         );
       case "pending":
         return (
-          <Badge className="bg-yellow-500">
-            <Clock size={14} className="mr-1" />
-            <Text className="text-white">Pending</Text>
+          <Badge
+            className="bg-yellow-500"
+            style={{ backgroundColor: colors.notification }}
+          >
+            {" "}
+            // Using notification color for pending
+            <MaterialCommunityIcons
+              name="clock-outline"
+              size={14}
+              className="mr-1"
+              color={colors.card} // Assuming badge text color should contrast
+            />
+            <Text style={{ color: colors.card }}>Pending</Text>
           </Badge>
         );
       default:
@@ -83,71 +111,195 @@ export default function OrdersScreen() {
     }
   };
 
-  return (
-    <View className="flex-1 bg-background p-4">
-      <Text className="text-2xl font-bold mb-4">My Orders</Text>
+  const renderOrderItem = ({ item }: { item: (typeof ORDERS)[0] }) => (
+    <Card className="mb-4 mx-4" style={{ backgroundColor: colors.card }}>
+      <CardHeader className="flex-row justify-between items-center">
+        <CardTitle style={{ color: colors.text }}>{item.orderNumber}</CardTitle>
+        {getStatusBadge(item.status)}
+      </CardHeader>
+      <CardContent>
+        <Text className="mb-1" style={{ color: colors.text }}>
+          Date: {item.date}
+        </Text>
+        <Text className="mb-2 font-semibold" style={{ color: colors.text }}>
+          Items:
+        </Text>
+        {item.items.map((orderItem) => (
+          <View key={orderItem.id} className="flex-row justify-between mb-1">
+            <Text style={{ color: colors.text }}>
+              {orderItem.quantity}x {orderItem.name}
+            </Text>
+          </View>
+        ))}
+        <Text
+          className="mt-2 font-bold text-lg"
+          style={{ color: colors.primary }}
+        >
+          Total: ${item.total.toFixed(2)}
+        </Text>
+      </CardContent>
+      <CardFooter className="flex-row justify-end space-x-2">
+        <Button variant="outline" size="sm">
+          <Text>View Details</Text>
+        </Button>
+        {item.status === "processing" && (
+          <Button variant="default" size="sm">
+            <Text>Track Order</Text>
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
+  );
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-4">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all" onPress={() => setActiveTab("all")}>
-            All
+  return (
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+        <TabsList
+          className="mx-4 mt-4"
+          style={{ backgroundColor: colors.card, borderColor: colors.border }}
+        >
+          <TabsTrigger value="all">
+            <Text
+              style={{
+                color: activeTab === "all" ? colors.primary : colors.text,
+              }}
+            >
+              All Orders
+            </Text>
           </TabsTrigger>
-          <TabsTrigger value="pending" onPress={() => setActiveTab("pending")}>
-            Pending
+          <TabsTrigger value="processing">
+            <Text
+              style={{
+                color:
+                  activeTab === "processing" ? colors.primary : colors.text,
+              }}
+            >
+              Processing
+            </Text>
           </TabsTrigger>
-          <TabsTrigger
-            value="processing"
-            onPress={() => setActiveTab("processing")}
-          >
-            Processing
+          <TabsTrigger value="delivered">
+            <Text
+              style={{
+                color: activeTab === "delivered" ? colors.primary : colors.text,
+              }}
+            >
+              Delivered
+            </Text>
           </TabsTrigger>
-          <TabsTrigger
-            value="delivered"
-            onPress={() => setActiveTab("delivered")}
-          >
-            Delivered
+          <TabsTrigger value="pending">
+            <Text
+              style={{
+                color: activeTab === "pending" ? colors.primary : colors.text,
+              }}
+            >
+              Pending
+            </Text>
           </TabsTrigger>
         </TabsList>
-      </Tabs>
 
-      <FlatList
-        data={filteredOrders}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <Card className="mb-4">
-            <CardHeader>
-              <View className="flex-row justify-between items-center">
-                <CardTitle>{item.orderNumber}</CardTitle>
-                {getStatusBadge(item.status)}
-              </View>
-              <Text className="text-sm text-muted-foreground">
-                Ordered on {item.date}
-              </Text>
-            </CardHeader>
-            <CardContent>
-              <Text className="font-medium mb-2">Items:</Text>
-              {item.items.map((orderItem) => (
-                <Text key={orderItem.id} className="text-sm">
-                  {orderItem.quantity}x {orderItem.name}
+        <TabsContent value="all" className="flex-1">
+          <FlatList
+            data={filteredOrders}
+            renderItem={renderOrderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingVertical: 16 }}
+            ListEmptyComponent={() => (
+              <View className="flex-1 items-center justify-center py-10">
+                <MaterialCommunityIcons
+                  name="cart-off"
+                  size={48}
+                  color={colors.text} // Use themed color
+                  className="mb-4"
+                />
+                <Text
+                  className="text-lg font-medium"
+                  style={{ color: colors.text }}
+                >
+                  No orders found.
                 </Text>
-              ))}
-              <Text className="mt-2 text-lg font-semibold">
-                Total: ${item.total.toFixed(2)}
-              </Text>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                <Text>View Details</Text>
-              </Button>
-            </CardFooter>
-          </Card>
-        )}
-        ListEmptyComponent={() => (
-          <View className="items-center justify-center py-8">
-            <Text className="text-muted-foreground">No orders found</Text>
-          </View>
-        )}
-      />
+                <Text
+                  className="text-center mt-1"
+                  style={{ color: colors.text }}
+                >
+                  You haven't placed any orders yet.
+                </Text>
+              </View>
+            )}
+          />
+        </TabsContent>
+        <TabsContent value="processing" className="flex-1">
+          <FlatList
+            data={filteredOrders}
+            renderItem={renderOrderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingVertical: 16 }}
+            ListEmptyComponent={() => (
+              <View className="flex-1 items-center justify-center py-10">
+                <MaterialCommunityIcons
+                  name="progress-clock"
+                  size={48}
+                  color={colors.text} // Use themed color
+                  className="mb-4"
+                />
+                <Text
+                  className="text-lg font-medium"
+                  style={{ color: colors.text }}
+                >
+                  No orders processing.
+                </Text>
+              </View>
+            )}
+          />
+        </TabsContent>
+        <TabsContent value="delivered" className="flex-1">
+          <FlatList
+            data={filteredOrders}
+            renderItem={renderOrderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingVertical: 16 }}
+            ListEmptyComponent={() => (
+              <View className="flex-1 items-center justify-center py-10">
+                <MaterialCommunityIcons
+                  name="check-all"
+                  size={48}
+                  color={colors.text} // Use themed color
+                  className="mb-4"
+                />
+                <Text
+                  className="text-lg font-medium"
+                  style={{ color: colors.text }}
+                >
+                  No orders delivered yet.
+                </Text>
+              </View>
+            )}
+          />
+        </TabsContent>
+        <TabsContent value="pending" className="flex-1">
+          <FlatList
+            data={filteredOrders}
+            renderItem={renderOrderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingVertical: 16 }}
+            ListEmptyComponent={() => (
+              <View className="flex-1 items-center justify-center py-10">
+                <MaterialCommunityIcons
+                  name="timer-sand-empty"
+                  size={48}
+                  color={colors.text} // Use themed color
+                  className="mb-4"
+                />
+                <Text
+                  className="text-lg font-medium"
+                  style={{ color: colors.text }}
+                >
+                  No pending orders.
+                </Text>
+              </View>
+            )}
+          />
+        </TabsContent>
+      </Tabs>
     </View>
   );
 }
