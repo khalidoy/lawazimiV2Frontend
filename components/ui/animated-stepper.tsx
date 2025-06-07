@@ -277,15 +277,15 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
     });
     // Animate current step with enhanced effects
     if (currentStep < stepScales.length) {
-      // ===== VERSION 1: ORBITAL RING ANIMATION =====
-      // Enhanced ripple effect with multiple waves
+      // ===== VERSION 1: ORBITAL RING ANIMATION =====      // Enhanced ripple effect with multiple waves
       rippleScale.value = 0;
       rippleOpacity.value = 0;
+
       rippleScale.value = withRepeat(
         withSequence(
           withTiming(0, { duration: 0 }),
-          withTiming(1.6, { duration: 1200, easing: Easing.out(Easing.quad) }),
-          withTiming(2, { duration: 800, easing: Easing.out(Easing.quad) })
+          withTiming(1.2, { duration: 1200, easing: Easing.out(Easing.quad) }),
+          withTiming(1.4, { duration: 800, easing: Easing.out(Easing.quad) })
         ),
         -1,
         false
@@ -319,14 +319,14 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
         ),
         -1,
         true
-      ); // Breathing effect with subtle scale changes - bigger active step
+      ); // Breathing effect with enhanced scale changes - much bigger active step
       breathingScale.value = withRepeat(
         withSequence(
-          withTiming(1.25, {
+          withTiming(1.4, {
             duration: 1500,
             easing: Easing.inOut(Easing.quad),
           }),
-          withTiming(1.15, {
+          withTiming(1.3, {
             duration: 1500,
             easing: Easing.inOut(Easing.quad),
           })
@@ -340,13 +340,11 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
         withTiming(1, { duration: 3000, easing: Easing.linear }),
         -1,
         false
-      );
-
-      // Enhanced icon bounce with rotation
+      ); // Enhanced icon bounce with larger scale
       iconBounce.value = withSequence(
-        withSpring(1.3, { damping: 8, stiffness: 300 }),
-        withSpring(1.05, { damping: 12, stiffness: 200 }),
-        withSpring(1, { damping: 15, stiffness: 150 })
+        withSpring(1.5, { damping: 8, stiffness: 300 }),
+        withSpring(1.2, { damping: 12, stiffness: 200 }),
+        withSpring(1.1, { damping: 15, stiffness: 150 })
       ); // Lightning effects disabled
       lightningOpacity.value = withTiming(0, { duration: 300 });
 
@@ -359,16 +357,17 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
         -1,
         true
       ); // Icon rotation disabled - no wobble
-      stepRotations[currentStep].value = withTiming(0, { duration: 300 });
-
-      // Scale breathing
+      stepRotations[currentStep].value = withTiming(0, { duration: 300 }); // Enhanced scale breathing for active step
       stepScales[currentStep].value = withRepeat(
         withSequence(
-          withTiming(1.08, {
+          withTiming(1.15, {
             duration: 1200,
             easing: Easing.inOut(Easing.quad),
           }),
-          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.quad) })
+          withTiming(1.05, {
+            duration: 1200,
+            easing: Easing.inOut(Easing.quad),
+          })
         ),
         -1,
         true
@@ -534,22 +533,24 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
 
     return (
       <View key={step.key} style={styles.stepContainer}>
+        {" "}
         <View style={styles.stepIconContainer}>
+          {" "}
           {/* Enhanced ripple effect */}
           {isActive && (
             <Animated.View
               style={[
                 styles.ripple,
                 rippleStyle,
-                { backgroundColor: themeColors.primary + "15" },
+                { backgroundColor: themeColors.primary + "40" },
               ]}
             />
           )}
-
           {/* Step icon with enhanced breathing and color effects */}
           <Animated.View
             style={[
               styles.stepIcon,
+              isActive && { width: 58, height: 58, borderRadius: 29 }, // Bigger base size for active step
               isCompleted && [
                 styles.completedStep,
                 { backgroundColor: themeColors.primary },
@@ -601,13 +602,14 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
                   />
                 </Animated.View>
               </>
-            )}
+            )}{" "}
             <Animated.View
               style={index === currentStep ? getStepStyle(index) : {}}
             >
+              {" "}
               <Icon
                 name={isCompleted ? "check" : step.iconName}
-                size={24}
+                size={isActive ? 26 : 20}
                 color={
                   isCompleted || isActive
                     ? "#FFFFFF"
@@ -620,7 +622,6 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
             </Animated.View>
           </Animated.View>
         </View>
-
         <Text
           style={[
             styles.stepTitle,
@@ -841,9 +842,22 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 15,
-    paddingVertical: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 15,
     width: "100%",
+    // Enhanced darker shadows for iOS
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    // Enhanced shadow for Android
+    elevation: 12,
+    // Background to ensure shadow is visible
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 12,
   },
   progressContainer: {
     position: "relative",
@@ -851,28 +865,28 @@ const styles = StyleSheet.create({
   },
   progressLine: {
     position: "absolute",
-    top: 30,
-    left: 50,
-    right: 50,
-    height: 4,
+    top: 22,
+    left: 35,
+    right: 35,
+    height: 3,
     backgroundColor: "#E5E7EB",
     borderRadius: 2,
     zIndex: 1,
   },
   progressBorderGlow: {
     position: "absolute",
-    top: 28,
-    left: 48,
-    right: 48,
-    height: 8,
+    top: 20,
+    left: 33,
+    right: 33,
+    height: 7,
     borderRadius: 4,
     zIndex: 0,
   },
   activeProgressLine: {
     position: "absolute",
-    top: 30,
-    left: 50,
-    height: 4,
+    top: 22,
+    left: 35,
+    height: 3,
     borderRadius: 2,
     zIndex: 2,
     overflow: "hidden",
@@ -1010,27 +1024,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     zIndex: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 5,
   },
   stepIconContainer: {
     position: "relative",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   ripple: {
     position: "absolute",
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    top: -4,
-    left: -4,
-    zIndex: 1,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    top: -3,
+    left: -3,
+    zIndex: 0,
   },
   stepIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
@@ -1056,38 +1070,38 @@ const styles = StyleSheet.create({
   },
   glow: {
     position: "absolute",
-    top: -6,
-    left: -6,
-    right: -6,
-    bottom: -6,
-    borderRadius: 36,
+    top: -4,
+    left: -4,
+    right: -4,
+    bottom: -4,
+    borderRadius: 29,
     backgroundColor: "rgba(76, 205, 196, 0.3)",
     shadowColor: "#4ECDC4",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
-    shadowRadius: 15,
-    elevation: 20,
+    shadowRadius: 12,
+    elevation: 15,
     zIndex: 1,
   },
   dynamicGlow: {
     position: "absolute",
-    top: -10,
-    left: -10,
-    right: -10,
-    bottom: -10,
-    borderRadius: 36,
+    top: -7,
+    left: -7,
+    right: -7,
+    bottom: -7,
+    borderRadius: 29,
     shadowColor: "#4ECDC4",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
-    shadowRadius: 18,
-    elevation: 15,
+    shadowRadius: 15,
+    elevation: 12,
     zIndex: 0,
   },
   stepTitle: {
-    fontSize: 14,
+    fontSize: 12,
     textAlign: "center",
-    marginTop: 8,
-    maxWidth: 90,
+    marginTop: 6,
+    maxWidth: 80,
   },
   activeStepTitle: {
     fontWeight: "600",
