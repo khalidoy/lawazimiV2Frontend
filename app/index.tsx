@@ -227,9 +227,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stepperContainer: {
-    height: 150, // Fixed height for stepper area
+    height: 120, // Increased to 120 for better stepper visibility
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 8,
+    overflow: "visible", // Ensure content isn't clipped
   },
   contentArea: {
     flex: 1,

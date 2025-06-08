@@ -1,10 +1,4 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "~/components/ui/accordion";
-import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { useRouter } from "expo-router";
 import {
   View,
@@ -14,29 +8,56 @@ import {
   StyleSheet,
   Platform,
   Image,
+  Modal,
+  Dimensions,
+  Pressable,
 } from "react-native";
-import Animated, { FadeInUp } from "react-native-reanimated";
+import Animated, {
+  FadeInUp,
+  FadeInDown,
+  FadeInLeft,
+  FadeInRight,
+  FadeOutUp,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withDelay,
+  interpolate,
+  Extrapolate,
+} from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import React from "react";
 import { useTheme } from "@react-navigation/native";
 import { NAV_THEME } from "~/lib/constants";
 import { useColorScheme } from "~/lib/useColorScheme";
+import { LinearGradient } from "expo-linear-gradient";
+import StoreBottomSheet from "~/components/StoreBottomSheet";
 
-// Assuming these components are correctly imported from your UI library
+// UI Library Components
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { Button } from "~/components/ui/button"; // Keep for Dialog, remove from Cards
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"; // CardTitle might not be used if text is custom
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter, // If needed for dialog buttons
-  DialogClose, // If needed for a close button in dialog
+  DialogFooter,
+  DialogClose,
 } from "~/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { Progress } from "~/components/ui/progress"; // Assuming a Progress component exists
+import { Progress } from "~/components/ui/progress";
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 // Define a FileItem type to use throughout the component
 interface FileItem {
@@ -56,6 +77,144 @@ interface UploadStepProps {
   onUploadStatusChange?: (isUploading: boolean) => void;
 }
 
+// Reusable Option Card Component using react-native-reusables patterns
+interface OptionCardProps {
+  title: string;
+  description: string;
+  iconName: string;
+  badgeText: string;
+  gradientColors: [string, string, string];
+  onPress: () => void;
+  animatedStyle: any;
+  navColors: any;
+}
+
+const OptionCard: React.FC<OptionCardProps> = ({
+  title,
+  description,
+  iconName,
+  badgeText,
+  gradientColors,
+  onPress,
+  animatedStyle,
+  navColors,
+}) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.8}
+    className="flex-1"
+    style={{
+      minHeight: 220,
+      shadowColor: "#000000",
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.15,
+      shadowRadius: 20,
+      elevation: 12,
+    }}
+  >
+    <Animated.View style={[animatedStyle]} className="flex-1">
+      <Card
+        className="flex-1 border border-border bg-card shadow-lg shadow-foreground/20 overflow-hidden relative"
+        style={{
+          borderColor: navColors.border + "40",
+          shadowColor: "#000000",
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.1,
+          shadowRadius: 16,
+          elevation: 8,
+        }}
+      >
+        {/* Gradient Background */}
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFillObject, { opacity: 0.3 }]}
+        />
+        {/* Badge positioned absolutely */}
+        <View
+          className="absolute top-4 right-4 px-3 py-1.5 rounded-full shadow-md z-30 bg-primary"
+          style={{
+            backgroundColor: navColors.primary,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5,
+            zIndex: 30,
+          }}
+        >
+          <Text
+            className="text-lg font-bold text-primary-foreground tracking-wide"
+            style={{
+              fontFamily: "Staatliches",
+              color: "white",
+              zIndex: 31,
+              fontSize: 18,
+            }}
+          >
+            {badgeText}
+          </Text>
+        </View>
+        <CardHeader className="flex flex-col items-center space-y-2 p-4 pt-4 pb-2">
+          {/* Icon Container */}
+          <View
+            className="w-20 h-20 rounded-full items-center justify-center shadow-sm z-20"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              borderWidth: 2,
+              borderColor: navColors.primary + "30",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3,
+              zIndex: 20,
+            }}
+          >
+            <MaterialCommunityIcons
+              name={iconName as any}
+              size={48}
+              color={navColors.primary}
+              style={{
+                zIndex: 21,
+                textShadowColor: "rgba(0, 0, 0, 0.1)",
+                textShadowOffset: { width: 0, height: 1 },
+                textShadowRadius: 2,
+              }}
+            />
+          </View>
+          <CardTitle
+            className="text-3xl font-semibold text-center tracking-tight text-card-foreground"
+            style={{
+              fontFamily: "Staatliches",
+              color: navColors.text,
+              zIndex: 20,
+              fontSize: 28,
+            }}
+          >
+            {title}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 items-center p-4 pt-0">
+          <CardDescription
+            className="text-lg text-center text-muted-foreground leading-relaxed"
+            style={{
+              fontFamily: "Staatliches",
+              color: navColors.text,
+              opacity: 0.8,
+              zIndex: 20,
+              fontSize: 18,
+            }}
+          >
+            {description}
+          </CardDescription>
+        </CardContent>
+      </Card>
+    </Animated.View>
+  </TouchableOpacity>
+);
+
 const UploadStep = ({
   onNext,
   onUploadImage,
@@ -69,15 +228,66 @@ const UploadStep = ({
   const router = useRouter();
   const { colors } = useTheme(); // from @react-navigation/native
   const { isDarkColorScheme } = useColorScheme();
-  const navColors = isDarkColorScheme ? NAV_THEME.dark : NAV_THEME.light;
+  const navColors = isDarkColorScheme ? NAV_THEME.dark : NAV_THEME.light; // Animation values for enhanced entrance animations
+  const headerScale = useSharedValue(0.8);
+  const headerOpacity = useSharedValue(0);
+  const alertScale = useSharedValue(0.9);
+  const alertOpacity = useSharedValue(0);
+  const cardsScale = useSharedValue(0.95);
+  const cardsOpacity = useSharedValue(0);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [showUploadOptions, setShowUploadOptions] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
   const [uploadProgress, setUploadProgress] = React.useState(0);
+  // File preview modal states
+  const [filePreviewVisible, setFilePreviewVisible] = React.useState(false);
+  const [selectedFileIndex, setSelectedFileIndex] = React.useState<
+    number | null
+  >(null); // Custom accordion state
+  const [isFilesExpanded, setIsFilesExpanded] = React.useState(true);
+  const [isCartExpanded, setIsCartExpanded] = React.useState(true);
+
+  // Store bottom sheet state
+  const [storeVisible, setStoreVisible] = React.useState(false);
+  // Ref for accordion container to enable auto-scroll
+  const accordionRef = React.useRef<View>(null);
+  const cartAccordionRef = React.useRef<View>(null);
+  const scrollViewRef = React.useRef<ScrollView>(null);
 
   const [fileMap, setFileMap] = React.useState<Map<string, FileItem>>(
     new Map()
-  );
+  ); // Initialize entrance animations
+  React.useEffect(() => {
+    // Staggered entrance animations
+    headerScale.value = withSpring(1, { damping: 20, stiffness: 200 });
+    headerOpacity.value = withTiming(1, { duration: 800 });
+
+    alertScale.value = withDelay(
+      150,
+      withSpring(1, { damping: 18, stiffness: 180 })
+    );
+    alertOpacity.value = withDelay(150, withTiming(1, { duration: 600 }));
+
+    cardsScale.value = withDelay(
+      300,
+      withSpring(1, { damping: 16, stiffness: 160 })
+    );
+    cardsOpacity.value = withDelay(300, withTiming(1, { duration: 700 }));
+  }, []); // Animated styles
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: headerScale.value }],
+    opacity: headerOpacity.value,
+  }));
+
+  const alertAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: alertScale.value }],
+    opacity: alertOpacity.value,
+  }));
+
+  const cardsAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: cardsScale.value }],
+    opacity: cardsOpacity.value,
+  }));
 
   const createFileItem = (uri: string): FileItem => {
     const existingFile = fileMap.get(uri);
@@ -184,8 +394,10 @@ const UploadStep = ({
       }
     }, 150);
   };
-
   const takePhoto = async () => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -205,8 +417,10 @@ const UploadStep = ({
       alert("Failed to take photo. Please try again.");
     }
   };
-
   const pickImage = async () => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -232,8 +446,10 @@ const UploadStep = ({
   React.useEffect(() => {
     fileMetadataRef.current = fileMetadata;
   }, [fileMetadata]);
-
   const pickDocument = async () => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: [
@@ -277,8 +493,10 @@ const UploadStep = ({
       alert("Failed to select document. Please try again.");
     }
   };
-
   const removeFile = (uri: string) => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     onUploadImage(uploadedImages.filter((imgUri) => imgUri !== uri));
     // Metadata associated with this URI might need cleanup if stored by URI directly
     // However, current metadata is keyed by filenamePart, so it might persist if another file has the same temp name.
@@ -288,7 +506,6 @@ const UploadStep = ({
   const files = React.useMemo(() => {
     return Array.from(fileMap.values());
   }, [fileMap]);
-
   const getDisplayName = (file: FileItem): string => {
     if (
       file.name &&
@@ -304,571 +521,1119 @@ const UploadStep = ({
       return storedName;
     }
     return file.name || filenamePart || "Unknown File";
+  }; // Handle file preview
+  const handleFilePreview = (index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedFileIndex(index);
+    setFilePreviewVisible(true);
   };
 
+  // Handle modal close with scroll-up functionality
+  const handleModalClose = () => {
+    setFilePreviewVisible(false);
+    setSelectedFileIndex(null);
+
+    // Scroll to top with smooth animation after modal closes
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({
+        y: 0,
+        animated: true,
+      });
+    }, 300); // Delay to allow modal close animation to complete
+  };
+
+  // Handle accordion toggle with auto-scroll
+  const handleAccordionToggle = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newExpanded = !isFilesExpanded;
+    setIsFilesExpanded(newExpanded);
+    // Auto-scroll to accordion when opening
+    if (newExpanded && accordionRef.current && scrollViewRef.current) {
+      setTimeout(() => {
+        accordionRef.current?.measureLayout(
+          scrollViewRef.current as any,
+          (x, y) => {
+            scrollViewRef.current?.scrollTo({
+              y: y - 50, // Offset to show some content above
+              animated: true,
+            });
+          },
+          () => {
+            // Fallback: scroll to bottom if measure fails
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }
+        );
+      }, 250); // Delay to allow accordion animation to start
+    }
+  };
+  // Handle cart accordion toggle with auto-scroll
+  const handleCartAccordionToggle = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newExpanded = !isCartExpanded;
+    setIsCartExpanded(newExpanded);
+    // Auto-scroll to accordion when opening
+    if (newExpanded && cartAccordionRef.current && scrollViewRef.current) {
+      setTimeout(() => {
+        cartAccordionRef.current?.measureLayout(
+          scrollViewRef.current as any,
+          (x, y) => {
+            scrollViewRef.current?.scrollTo({
+              y: y - 50, // Offset to show some content above
+              animated: true,
+            });
+          },
+          () => {
+            // Fallback: scroll to bottom if measure fails
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }
+        );
+      }, 250); // Delay to allow accordion animation to start
+    }
+  };
+
+  // Animation values for cards
+  const uploadCardScale = useSharedValue(1);
+  const manualCardScale = useSharedValue(1);
+
+  const uploadCardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: uploadCardScale.value }],
+  }));
+
+  const manualCardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: manualCardScale.value }],
+  }));
+  const handleUploadPress = () => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    uploadCardScale.value = withSpring(0.95, { duration: 100 }, () => {
+      uploadCardScale.value = withSpring(1, { duration: 150 });
+    });
+    setShowUploadOptions(true);
+  };
+  const handleManualPress = () => {
+    // Add haptic feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    manualCardScale.value = withSpring(0.95, { duration: 100 }, () => {
+      manualCardScale.value = withSpring(1, { duration: 150 });
+    });
+    setStoreVisible(true);
+  };
   React.useEffect(() => {
     onUploadStatusChange(isUploading);
   }, [isUploading, onUploadStatusChange]);
-
-  const cardShadowStyle = {
-    backgroundColor: navColors.card, // Use navColors
-    borderColor: navColors.border, // Use navColors
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 }, // Adjusted for a bit more depth
-    shadowOpacity: 0.2, // Clearer shadow
-    shadowRadius: 5, // Softer edges
-    elevation: 7, // Android equivalent
-  };
-
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: navColors.background }]}
-      contentContainerStyle={styles.contentContainer}
+      ref={scrollViewRef}
+      className="flex-1"
+      style={{ backgroundColor: navColors.background }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
       keyboardShouldPersistTaps="handled"
     >
-      <View style={styles.alertContainer}>
+      {/* Compact Alert Container with Animation */}
+      <Animated.View
+        className="w-full items-center mb-5"
+        style={[alertAnimatedStyle]}
+        entering={FadeInDown.delay(100).duration(600)}
+      >
         <Alert
           icon={
-            <Icon
+            <MaterialCommunityIcons
               name="information-outline"
-              size={24}
+              size={20}
               color={navColors.primary}
             />
           }
-          variant="default" // Assuming default variant handles basic structure
+          variant="default"
+          className="border rounded-xl shadow-lg p-3"
           style={{
             backgroundColor: navColors.card,
-            borderColor: navColors.border,
+            borderColor: navColors.primary + "20",
             borderWidth: 1,
-            borderRadius: 8, // Match card rounding
-            width: "90%", // Make alert narrower than screen width
-            alignSelf: "center", // Center the alert
-            elevation: 2, // Add a slight shadow on Android
+            elevation: 8,
             shadowColor: "#000",
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.25,
+            shadowRadius: 12,
           }}
-          className="mb-6 p-4" // Adjusted padding and margin
         >
-          <AlertTitle
-            style={{
-              color: navColors.primary,
-              fontFamily: "Staatliches",
-              fontSize: 18,
-              marginBottom: 4,
-            }}
-          >
-            Upload Instructions
-          </AlertTitle>
           <AlertDescription
+            className="text-sm text-center opacity-80"
             style={{
               color: navColors.text,
-              fontSize: 14,
               fontFamily: "Staatliches",
+              fontSize: 14,
             }}
           >
-            Select an option below to add your school supply list or items.
+            {" "}
+            Choisissez comment vous souhaitez ajouter vos articles
           </AlertDescription>
         </Alert>
-      </View>
-
-      <TouchableOpacity
-        onPress={() => setShowUploadOptions(true)}
-        activeOpacity={0.7}
-        style={{ marginHorizontal: 16 }} // Added margin for consistency
+      </Animated.View>
+      {/* Main Options Container - Horizontal Layout with Animation */}
+      <Animated.View
+        className="flex-row justify-between gap-4 mb-6"
+        style={[cardsAnimatedStyle]}
+        entering={FadeInUp.delay(250).duration(700)}
       >
-        <Card
-          // className="mb-4 bg-card border-border rounded-xl"
-          className="mb-4 rounded-xl" // Removed color classes, style prop handles it
-          style={cardShadowStyle} // cardShadowStyle already uses navColors
+        {/* Upload Option */}
+        <Animated.View
+          entering={FadeInLeft.delay(400).duration(600)}
+          className="flex-1"
         >
-          <CardHeader className="p-5 items-center">
-            <Icon
-              name="upload"
-              size={64} // Increased icon size
-              color={navColors.primary}
-              className="mb-3"
-            />
-            <View className="items-center w-full">
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontFamily: "Staatliches",
-                  color: navColors.text,
-                  textAlign: "center",
-                  marginBottom: 2,
-                }}
-              >
-                Importer votre Liste
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontFamily: "Staatliches",
-                  color: navColors.text,
-                  textAlign: "center",
-                  opacity: 0.7,
-                }}
-              >
-                Rapide et facile
-              </Text>
-            </View>
-          </CardHeader>
-          <CardContent className="p-5 pt-2">
-            <Text
-              style={{
-                fontSize: 15,
-                fontFamily: "Staatliches",
-                color: navColors.text,
-                lineHeight: 22,
-                textAlign: "center",
-                opacity: 0.8,
-              }}
-            >
-              Photographiez votre liste ou téléchargez un fichier (PDF, JPG,
-              PNG).
-            </Text>
-          </CardContent>
-        </Card>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={() => router.push("/store")}
-        activeOpacity={0.7}
-        style={{ marginHorizontal: 16 }}
-      >
-        <Card
-          // className="mb-4 bg-card border-border rounded-xl"
-          className="mb-4 rounded-xl"
-          style={cardShadowStyle} // cardShadowStyle already uses navColors
+          <OptionCard
+            title="Importer votre Liste"
+            description="Photographiez ou téléchargez votre liste scolaire pour une sélection automatique"
+            iconName="cloud-upload-outline"
+            badgeText="Rapide"
+            gradientColors={[
+              navColors.card + "FF",
+              navColors.card + "F5",
+              navColors.card + "FF",
+            ]}
+            onPress={handleUploadPress}
+            animatedStyle={uploadCardAnimatedStyle}
+            navColors={navColors}
+          />
+        </Animated.View>
+        {/* Manual Selection Option */}
+        <Animated.View
+          entering={FadeInRight.delay(400).duration(600)}
+          className="flex-1"
         >
-          <CardHeader className="p-5 items-center">
-            <Icon
-              name="cursor-default-click-outline"
-              size={64} // Increased icon size
-              color={navColors.primary}
-              className="mb-3"
-            />
-            <View className="items-center w-full">
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontFamily: "Staatliches",
-                  color: navColors.text,
-                  textAlign: "center",
-                  marginBottom: 2,
-                }}
-              >
-                Sélection Manuelle
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontFamily: "Staatliches",
-                  color: navColors.text,
-                  textAlign: "center",
-                  opacity: 0.7,
-                }}
-              >
-                Contrôle total
-              </Text>
-            </View>
-          </CardHeader>
-          <CardContent className="p-5 pt-2">
-            <Text
-              style={{
-                fontSize: 15,
-                fontFamily: "Staatliches",
-                color: navColors.text,
-                lineHeight: 22,
-                textAlign: "center",
-                opacity: 0.8,
-              }}
-            >
-              Parcourez notre catalogue et ajoutez des articles
-              individuellement.
-            </Text>
-          </CardContent>
-        </Card>
-      </TouchableOpacity>
-
+          <OptionCard
+            title="Sélection Manuelle"
+            description="Parcourez notre catalogue et choisissez manuellement vos articles"
+            iconName="format-list-bulleted-square"
+            badgeText="Précis"
+            gradientColors={[
+              navColors.card + "FF",
+              navColors.card + "F5",
+              navColors.card + "FF",
+            ]}
+            onPress={handleManualPress}
+            animatedStyle={manualCardAnimatedStyle}
+            navColors={navColors}
+          />
+        </Animated.View>
+      </Animated.View>
       <Dialog open={showUploadOptions} onOpenChange={setShowUploadOptions}>
-        {/* Increased width from w-[90%] to w-[95%] or a fixed pixel value if preferred for more space 
-            Also increased overall padding for the content within the dialog e.g. p-0 to p-2 or more if DialogContent allows direct padding control
-            If DialogContent uses a fixed internal padding, we might need to adjust styles of children directly or the component itself if customizable.
-        */}
         <DialogContent
+          className="p-0 w-[90%] max-w-md rounded-2xl border"
           style={{
             backgroundColor: navColors.card,
             borderColor: navColors.border,
             borderWidth: 1,
-            borderRadius: 16,
-            width: "95%",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 10 },
+            shadowOpacity: 0.25,
+            shadowRadius: 25,
+            elevation: 15,
           }}
-          className="p-0"
         >
+          {" "}
           <DialogHeader
+            className="px-6 py-8 items-center border-b"
             style={{
               borderBottomColor: navColors.border,
-              borderBottomWidth: 1,
+              paddingTop: 32,
+              paddingBottom: 24,
             }}
-            className="px-6 py-5 items-center"
           >
-            {" "}
-            {/* Increased py-5 from p-6 for more vertical padding in header */}
             <DialogTitle
+              className="text-3xl text-center font-bold"
               style={{
                 color: navColors.text,
                 fontFamily: "Staatliches",
                 fontSize: 28,
-                textAlign: "center",
+                lineHeight: 36,
+                paddingHorizontal: 16,
               }}
             >
-              {" "}
-              {/* Increased font size */}
               Comment voulez-vous ajouter?
             </DialogTitle>
           </DialogHeader>
-          {/* Increased space-y to 6 for more pronounced spacing between buttons */}
-          <View className="p-6 space-y-6">
-            {[
-              {
-                icon: "camera-outline",
-                text: "Prendre une photo",
-                onPress: takePhoto,
-              },
-              {
-                icon: "image-multiple-outline",
-                text: "Choisir des images",
-                onPress: pickImage,
-              },
-              {
-                icon: "file-document-outline",
-                text: "Choisir un document",
-                onPress: pickDocument,
-              },
-            ].map((item, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                onPress={item.onPress}
+          <View className="p-8">
+            <View className="space-y-4">
+              {[
+                {
+                  icon: "camera-outline",
+                  text: "Prendre une photo",
+                  onPress: takePhoto,
+                },
+                {
+                  icon: "image-multiple-outline",
+                  text: "Choisir des images",
+                  onPress: pickImage,
+                },
+                {
+                  icon: "file-document-outline",
+                  text: "Choisir un document",
+                  onPress: pickDocument,
+                },
+              ].map((item, index) => (
+                <Animated.View
+                  key={index}
+                  entering={FadeInDown.delay(index * 150 + 200).duration(500)}
+                >
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={item.onPress}
+                    style={{
+                      backgroundColor: navColors.card,
+                      borderColor: navColors.primary,
+                      borderWidth: 2,
+                      borderRadius: 12,
+                      paddingVertical: 16,
+                      paddingHorizontal: 20,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 8,
+                      elevation: 6,
+                      marginBottom: 8,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={item.icon as any}
+                      size={40}
+                      color={navColors.primary}
+                      style={{ marginRight: 16 }}
+                    />
+                    <Text
+                      className="text-2xl font-bold"
+                      style={{
+                        color: navColors.primary,
+                        fontFamily: "Staatliches",
+                        fontSize: 24,
+                      }}
+                    >
+                      {" "}
+                      {item.text}
+                    </Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              ))}{" "}
+            </View>
+
+            <Animated.View entering={FadeInUp.delay(650).duration(400)}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setShowUploadOptions(false)}
                 style={{
-                  backgroundColor: navColors.card,
-                  borderColor: navColors.primary,
-                  borderWidth: 2, // Slightly thicker border
-                  paddingVertical: 16, // Increased vertical padding
-                  borderRadius: 10, // More rounded corners
+                  marginTop: 24,
+                  paddingVertical: 14,
+                  paddingHorizontal: 20,
+                  borderRadius: 12,
+                  backgroundColor: navColors.background,
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-                className="w-full flex-row items-center justify-center"
               >
-                <Icon
-                  name={item.icon as any}
-                  size={30} // Larger icon
-                  color={navColors.primary}
-                  style={{ marginRight: 14 }} // Increased margin
-                />
                 <Text
+                  className="text-2xl font-bold"
                   style={{
-                    color: navColors.primary,
+                    color: navColors.text,
                     fontFamily: "Staatliches",
-                    fontSize: 22,
+                    fontSize: 24,
                   }}
                 >
-                  {item.text}
-                </Text>{" "}
-                {/* Increased font size */}
-              </Button>
-            ))}
-            <Button
-              variant="ghost"
-              className="mt-6 w-full" // Increased top margin
-              style={{ paddingVertical: 14, borderRadius: 10 }} // Increased padding and rounding
-              onPress={() => setShowUploadOptions(false)}
-            >
-              <Text
-                style={{
-                  color: navColors.text,
-                  fontFamily: "Staatliches",
-                  fontSize: 20,
-                }}
-              >
-                Annuler
-              </Text>{" "}
-              {/* Increased font size */}
-            </Button>
+                  Annuler
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </DialogContent>
-      </Dialog>
-
+      </Dialog>{" "}
+      {/* Files Section - Custom Accordion Implementation */}
       {files.length > 0 && (
-        <View className="mt-2">
-          <Accordion type="single" collapsible defaultValue="files">
-            <AccordionItem
-              value="files"
-              className="rounded-lg"
+        <Animated.View
+          ref={accordionRef}
+          entering={FadeInDown.delay(400).springify()}
+          className="mt-4"
+        >
+          {" "}
+          <Card
+            className="border-0"
+            style={{
+              backgroundColor: navColors.card,
+              borderColor: navColors.border,
+              borderWidth: 1,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.25,
+              shadowRadius: 16,
+              elevation: 12,
+              overflow: "hidden",
+            }}
+          >
+            {" "}
+            {/* Custom Accordion Header */}
+            <Pressable
+              onPress={handleAccordionToggle}
               style={{
-                backgroundColor: colors.card,
-                borderColor: colors.border,
-                borderWidth: 1,
-                // Using a subtle shadow for the accordion as well
-                shadowColor: "#000000",
-                shadowOffset: { width: 0, height: 1 },
+                backgroundColor: navColors.background,
+                borderTopLeftRadius: 7,
+                borderTopRightRadius: 7,
+                padding: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.1,
-                shadowRadius: 2,
+                shadowRadius: 4,
                 elevation: 3,
               }}
             >
-              <AccordionTrigger
-                className="py-3 px-4"
+              <View className="flex-row items-center">
+                <MaterialCommunityIcons
+                  name="file-multiple"
+                  size={24}
+                  color={navColors.primary}
+                />
+                <Text
+                  className="ml-2 font-medium text-lg"
+                  style={{
+                    color: navColors.text,
+                    fontFamily: "Staatliches",
+                    fontSize: 20,
+                  }}
+                >
+                  Fichiers ({files.length})
+                </Text>
+              </View>
+              <Animated.View
                 style={{
-                  backgroundColor: navColors.background, // Use navColors
-                  borderTopLeftRadius: 7,
-                  borderTopRightRadius: 7,
+                  transform: [
+                    {
+                      rotate: isFilesExpanded ? "180deg" : "0deg",
+                    },
+                  ],
                 }}
               >
-                <View className="flex-row items-center">
-                  <Icon
-                    name="file-multiple"
-                    size={20}
-                    color={navColors.primary}
-                  />
-                  <Text
-                    className="ml-2 font-medium"
-                    style={{
-                      color: navColors.text,
-                      fontFamily: "Staatliches",
-                      fontSize: 16,
-                    }} // Apply Staatliches font and navColors
-                  >
-                    Fichiers téléchargés ({files.length})
-                  </Text>
-                </View>
-              </AccordionTrigger>
-              <AccordionContent
-                className="p-2"
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={20}
+                  color={navColors.text}
+                />
+              </Animated.View>
+            </Pressable>{" "}
+            {/* Custom Accordion Content */}
+            {isFilesExpanded && (
+              <Animated.View
+                entering={FadeInDown.duration(200)}
+                exiting={FadeOutUp.duration(150)}
                 style={{
-                  backgroundColor: navColors.card, // Use navColors
+                  backgroundColor: navColors.card,
                   borderBottomLeftRadius: 7,
                   borderBottomRightRadius: 7,
+                  padding: 8,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 8,
+                  elevation: 6,
                 }}
               >
                 <View className="flex-row flex-wrap justify-start">
                   {files.map((file, index) => {
                     const isImage = isImageFile(file.uri);
                     const displayName = getDisplayName(file);
-
                     return (
                       <View
                         key={`file-${index}-${file.uri}`}
-                        className="m-1.5 relative p-1 rounded-md border items-center"
                         style={{
-                          width: 80,
-                          backgroundColor: navColors.background,
-                          borderColor: navColors.border,
-                        }} // Use navColors
+                          width: 70,
+                          margin: 6,
+                        }}
                       >
                         <TouchableOpacity
-                          onPress={() => {
-                            /* Implement file preview or options */
+                          activeOpacity={0.7}
+                          onPress={() => handleFilePreview(index)}
+                          style={{
+                            width: "100%",
+                            height: "auto",
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 8,
+                            elevation: 6,
                           }}
-                          className="items-center"
                         >
-                          {isImage ? (
-                            <Avatar
-                              alt={displayName}
-                              className="h-12 w-12 rounded-md mb-1"
-                            >
-                              <AvatarImage
-                                source={{ uri: file.uri }}
-                                className="rounded-md"
-                              />
-                              <AvatarFallback
-                                style={{
-                                  backgroundColor: navColors.background,
-                                }}
-                              >
-                                <Text
-                                  style={{
-                                    color: navColors.primary,
-                                    fontFamily: "Staatliches",
-                                  }}
-                                >
-                                  {displayName.substring(0, 1)}
-                                </Text>
-                              </AvatarFallback>
-                            </Avatar>
-                          ) : (
-                            <View
-                              className="h-12 w-12 rounded-md mb-1 items-center justify-center"
-                              style={{ backgroundColor: navColors.background }}
-                            >
-                              <Icon
-                                name={
-                                  file.type === "application/pdf"
-                                    ? "file-pdf-box"
-                                    : "file-outline"
-                                }
-                                size={28}
-                                color={navColors.primary}
-                              />
-                            </View>
-                          )}
-                          <Text
-                            numberOfLines={1}
-                            ellipsizeMode="tail"
-                            className="text-xs text-center"
+                          {" "}
+                          <Card
+                            className="relative bg-card border border-border shadow-sm"
                             style={{
-                              color: navColors.text,
-                              maxWidth: 70,
-                              fontFamily: "Staatliches",
+                              backgroundColor: navColors.card,
+                              borderColor: navColors.border,
+                              shadowColor: "#000",
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowOpacity: 0.1,
+                              shadowRadius: 4,
+                              elevation: 3,
                             }}
                           >
-                            {displayName}
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => removeFile(file.uri)}
-                          style={{
-                            position: "absolute",
-                            top: -5,
-                            right: -5,
-                            backgroundColor: navColors.border,
-                            borderRadius: 10,
-                            padding: 2,
-                          }}
-                        >
-                          <Icon
-                            name="close-circle"
-                            size={18}
-                            color={navColors.notification}
-                          />
+                            <CardContent className="p-2 items-center">
+                              {isImage ? (
+                                <View style={{ position: "relative" }}>
+                                  <Image
+                                    source={{ uri: file.uri }}
+                                    style={{
+                                      width: 40,
+                                      height: 40,
+                                      borderRadius: 6,
+                                      marginBottom: 4,
+                                    }}
+                                    resizeMode="cover"
+                                  />
+                                  {/* Eye icon overlay for images */}
+                                  <View
+                                    style={{
+                                      position: "absolute",
+                                      top: 0,
+                                      left: 0,
+                                      right: 0,
+                                      bottom: 4,
+                                      backgroundColor: "rgba(0,0,0,0.3)",
+                                      borderRadius: 6,
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      opacity: 0.8,
+                                    }}
+                                  >
+                                    <MaterialCommunityIcons
+                                      name="eye"
+                                      size={16}
+                                      color="white"
+                                    />
+                                  </View>
+                                </View>
+                              ) : (
+                                <View
+                                  className="h-10 w-10 rounded-md mb-1 items-center justify-center"
+                                  style={{
+                                    backgroundColor: "transparent",
+                                    borderWidth: 1,
+                                    borderColor: navColors.border,
+                                    position: "relative",
+                                  }}
+                                >
+                                  <MaterialCommunityIcons
+                                    name={
+                                      file.type === "application/pdf"
+                                        ? "file-pdf-box"
+                                        : "file-outline"
+                                    }
+                                    size={30}
+                                    color={navColors.primary}
+                                  />
+                                  {/* Eye icon overlay for documents */}
+                                  <View
+                                    style={{
+                                      position: "absolute",
+                                      top: 2,
+                                      right: 2,
+                                      backgroundColor: navColors.primary,
+                                      borderRadius: 8,
+                                      padding: 2,
+                                    }}
+                                  >
+                                    <MaterialCommunityIcons
+                                      name="eye"
+                                      size={10}
+                                      color="white"
+                                    />
+                                  </View>
+                                </View>
+                              )}
+                              <Text
+                                numberOfLines={1}
+                                ellipsizeMode="tail"
+                                className="text-base text-center text-card-foreground"
+                                style={{
+                                  color: navColors.text,
+                                  maxWidth: 60,
+                                  fontFamily: "Staatliches",
+                                  fontSize: 16,
+                                }}
+                              >
+                                {displayName}
+                              </Text>
+                              <TouchableOpacity
+                                onPress={() => removeFile(file.uri)}
+                                className="absolute -top-1 -right-1 p-0.5 rounded-full bg-border"
+                                style={{
+                                  backgroundColor: navColors.border,
+                                }}
+                              >
+                                <MaterialCommunityIcons
+                                  name="close-circle"
+                                  size={20}
+                                  color={navColors.notification}
+                                />
+                              </TouchableOpacity>{" "}
+                            </CardContent>
+                          </Card>
                         </TouchableOpacity>
                       </View>
                     );
                   })}
                 </View>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </View>
+              </Animated.View>
+            )}
+          </Card>
+        </Animated.View>
       )}
-
       {isUploading && (
         <Animated.View
           entering={Platform.OS !== "web" ? FadeInUp : undefined}
-          style={[
-            styles.uploadProgressContainer,
-            {
+          style={[styles.uploadProgressContainer]}
+        >
+          <Card
+            className="bg-card border-t border-border shadow-lg"
+            style={{
               backgroundColor: navColors.card,
               borderColor: navColors.border,
-            },
-          ]}
-        >
-          <View style={styles.uploadProgressContent}>
-            <View style={styles.uploadProgressHeader}>
-              <Icon
-                name="cloud-upload-outline"
-                size={22}
-                color={navColors.primary}
-                style={{ marginRight: 8 }}
-              />
-              <Text
-                style={{
-                  color: navColors.text,
-                  fontFamily: "Staatliches",
-                  fontSize: 18,
-                }}
-              >
-                Téléchargement en cours...
-              </Text>
-            </View>
-
-            <View style={styles.progressBarWithPercentage}>
-              <Progress
-                value={uploadProgress}
-                className="flex-1 h-3"
-                style={{ backgroundColor: `${navColors.background}80` }} // Semi-transparent background
-                indicatorClassName="bg-primary"
-              />
-              <View style={styles.percentageContainer}>
-                <Text
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 3,
+              elevation: 5,
+            }}
+          >
+            <CardContent className="p-4">
+              <CardHeader className="p-0 pb-3 flex-row items-center justify-center space-y-0">
+                <MaterialCommunityIcons
+                  name="cloud-upload-outline"
+                  size={28}
+                  color={navColors.primary}
+                  style={{ marginRight: 8 }}
+                />
+                <CardTitle
+                  className="text-2xl font-semibold text-card-foreground"
                   style={{
                     color: navColors.text,
                     fontFamily: "Staatliches",
-                    fontSize: 16,
+                    fontSize: 26,
                   }}
                 >
-                  {uploadProgress}%
+                  Téléchargement en cours...
+                </CardTitle>
+              </CardHeader>
+
+              <View className="flex-row items-center space-x-3">
+                <Progress
+                  value={uploadProgress}
+                  className="flex-1 h-3"
+                  style={{ backgroundColor: `${navColors.background}80` }}
+                  indicatorClassName="bg-primary"
+                />
+                <View className="min-w-[40px] items-center">
+                  <Text
+                    className="text-xl font-medium text-card-foreground"
+                    style={{
+                      color: navColors.text,
+                      fontFamily: "Staatliches",
+                      fontSize: 22,
+                    }}
+                  >
+                    {uploadProgress}%
+                  </Text>
+                </View>
+              </View>
+            </CardContent>{" "}
+          </Card>{" "}
+        </Animated.View>
+      )}{" "}
+      {/* Cart Items Accordion */}
+      {selectedItems.length > 0 && (
+        <Animated.View
+          ref={cartAccordionRef}
+          entering={FadeInDown.delay(500).springify()}
+          className="mt-4"
+        >
+          <Card
+            className="border-0"
+            style={{
+              backgroundColor: navColors.card,
+              borderColor: navColors.border,
+              borderWidth: 1,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.25,
+              shadowRadius: 16,
+              elevation: 12,
+              overflow: "hidden",
+            }}
+          >
+            {/* Cart Header */}
+            <Pressable
+              onPress={handleCartAccordionToggle}
+              style={{
+                backgroundColor: navColors.background,
+                borderTopLeftRadius: 7,
+                borderTopRightRadius: 7,
+                padding: 12,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View className="flex-row items-center">
+                {" "}
+                <MaterialCommunityIcons
+                  name="cart"
+                  size={24}
+                  color={navColors.primary}
+                />
+                <Text
+                  className="ml-2 font-medium text-lg"
+                  style={{
+                    color: navColors.text,
+                    fontFamily: "Staatliches",
+                    fontSize: 20,
+                  }}
+                >
+                  Panier ({selectedItems.length})
                 </Text>
               </View>
-            </View>
-          </View>
+              <Animated.View
+                style={{
+                  transform: [
+                    {
+                      rotate: isCartExpanded ? "180deg" : "0deg",
+                    },
+                  ],
+                }}
+              >
+                <MaterialCommunityIcons
+                  name="chevron-down"
+                  size={20}
+                  color={navColors.text}
+                />
+              </Animated.View>{" "}
+            </Pressable>{" "}
+            {/* Cart Content */}
+            {isCartExpanded && (
+              <Animated.View
+                entering={FadeInDown.duration(200)}
+                exiting={FadeOutUp.duration(150)}
+                style={{
+                  backgroundColor: navColors.card,
+                  borderBottomLeftRadius: 7,
+                  borderBottomRightRadius: 7,
+                  padding: 16,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 8,
+                  elevation: 6,
+                }}
+              >
+                <ScrollView
+                  style={{ maxHeight: 400 }}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {selectedItems.map((item, index) => (
+                    <Animated.View
+                      key={item.id || index}
+                      entering={FadeInDown.delay(index * 100).duration(400)}
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        paddingVertical: 16,
+                        borderBottomWidth:
+                          index < selectedItems.length - 1 ? 1 : 0,
+                        borderBottomColor: navColors.border + "20",
+                      }}
+                    >
+                      {/* Item Details */}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "flex-start",
+                          flex: 1,
+                          marginRight: 12,
+                        }}
+                      >
+                        {/* Item Image */}
+                        {item.image && (
+                          <Image
+                            source={{ uri: item.image }}
+                            style={{
+                              width: 60,
+                              height: 60,
+                              borderRadius: 12,
+                              marginRight: 12,
+                              backgroundColor: navColors.border + "20",
+                            }}
+                            resizeMode="cover"
+                          />
+                        )}
+
+                        {/* Item Info */}
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={{
+                              fontSize: 16,
+                              fontWeight: "600",
+                              color: navColors.text,
+                              marginBottom: 4,
+                              fontFamily: "Staatliches",
+                            }}
+                          >
+                            {item.name || "Article sans nom"}
+                          </Text>
+
+                          {item.description && (
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                color: navColors.text + "70",
+                                marginBottom: 6,
+                                lineHeight: 18,
+                              }}
+                              numberOfLines={2}
+                            >
+                              {item.description}
+                            </Text>
+                          )}
+                          {/* Item Meta */}
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 12,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 14,
+                                fontWeight: "500",
+                                color: navColors.primary,
+                                paddingHorizontal: 8,
+                                paddingVertical: 2,
+                                borderRadius: 6,
+                              }}
+                            >
+                              Qté: {item.quantity || 1}
+                            </Text>
+
+                            {item.category && (
+                              <Text
+                                style={{
+                                  fontSize: 12,
+                                  color: navColors.text + "60",
+                                  backgroundColor: navColors.border + "20",
+                                  paddingHorizontal: 6,
+                                  paddingVertical: 2,
+                                  borderRadius: 4,
+                                }}
+                              >
+                                {item.category}
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* Item Pricing & Remove Button */}
+                      <View style={{ alignItems: "flex-end" }}>
+                        {" "}
+                        {/* Price */}
+                        <View
+                          style={{ alignItems: "flex-end", marginBottom: 8 }}
+                        >
+                          {item.originalPrice &&
+                            parseFloat(item.originalPrice) >
+                              parseFloat(item.price || "0") && (
+                              <Text
+                                style={{
+                                  fontSize: 14,
+                                  color: navColors.text + "50",
+                                  textDecorationLine: "line-through",
+                                  marginBottom: 2,
+                                }}
+                              >
+                                {parseFloat(item.originalPrice).toFixed(2)} DH
+                              </Text>
+                            )}
+                          <Text
+                            style={{
+                              fontSize: 18,
+                              fontWeight: "700",
+                              color: "#2D7D32",
+                              marginBottom: 2,
+                            }}
+                          >
+                            {parseFloat(item.price || "0").toFixed(2)} DH
+                          </Text>
+                          {item.quantity && item.quantity > 1 && (
+                            <Text
+                              style={{
+                                fontSize: 12,
+                                color: navColors.text + "60",
+                                fontWeight: "500",
+                              }}
+                            >
+                              Total:{" "}
+                              {(
+                                parseFloat(item.price || "0") * item.quantity
+                              ).toFixed(2)}{" "}
+                              DH
+                            </Text>
+                          )}
+                        </View>
+                        {/* Remove Button */}
+                        <TouchableOpacity
+                          onPress={() => {
+                            Haptics.impactAsync(
+                              Haptics.ImpactFeedbackStyle.Light
+                            );
+                            const updatedItems = selectedItems.filter(
+                              (_, i) => i !== index
+                            );
+                            onSelectItems(updatedItems);
+                          }}
+                          style={{
+                            padding: 8,
+                            backgroundColor: "#FF4444" + "15",
+                            borderRadius: 8,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <MaterialCommunityIcons
+                            name="close"
+                            size={16}
+                            color="#FF4444"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </Animated.View>
+                  ))}{" "}
+                  {/* Cart Summary */}
+                  <Animated.View
+                    entering={FadeInUp.delay(300).duration(400)}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      paddingVertical: 16,
+                      marginTop: 8,
+                      borderRadius: 12,
+                      gap: 8,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name="package-variant"
+                      size={20}
+                      color={navColors.primary}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: "600",
+                        color: navColors.primary,
+                        fontFamily: "Staatliches",
+                      }}
+                    >
+                      {selectedItems.length} article
+                      {selectedItems.length !== 1 ? "s" : ""} sélectionné
+                      {selectedItems.length !== 1 ? "s" : ""}
+                    </Text>
+                  </Animated.View>{" "}
+                  {/* Total Price */}
+                  <Animated.View
+                    entering={FadeInUp.delay(400).duration(400)}
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      paddingVertical: 16,
+                      paddingHorizontal: 8,
+                      borderRadius: 12,
+                      marginTop: 8,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 18,
+                        fontWeight: "700",
+                        color: navColors.text,
+                        fontFamily: "Staatliches",
+                      }}
+                    >
+                      Total Panier
+                    </Text>{" "}
+                    <Text
+                      style={{
+                        fontSize: 22,
+                        fontWeight: "800",
+                        color: "#2D5A27",
+                        fontFamily: "Staatliches",
+                      }}
+                    >
+                      {selectedItems
+                        .reduce(
+                          (sum, item) =>
+                            sum +
+                            parseFloat(item.price || "0") *
+                              (item.quantity || 1),
+                          0
+                        )
+                        .toFixed(2)}{" "}
+                      DH
+                    </Text>{" "}
+                  </Animated.View>
+                </ScrollView>
+              </Animated.View>
+            )}
+          </Card>
         </Animated.View>
       )}
+      {/* File Preview Modal */}
+      <Modal
+        visible={filePreviewVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleModalClose}
+      >
+        <View style={styles.modalContainer}>
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            onPress={handleModalClose}
+            activeOpacity={1}
+          >
+            <View style={styles.modalContent}>
+              {selectedFileIndex !== null && files[selectedFileIndex] && (
+                <>
+                  {isImageFile(files[selectedFileIndex].uri) ? (
+                    <Image
+                      source={{ uri: files[selectedFileIndex].uri }}
+                      style={styles.fullScreenImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <View style={styles.documentPreview}>
+                      <MaterialCommunityIcons
+                        name={
+                          files[selectedFileIndex].type === "application/pdf"
+                            ? "file-pdf-box"
+                            : "file-outline"
+                        }
+                        size={120}
+                        color={navColors.primary}
+                      />
+                      <Text
+                        style={[
+                          styles.documentTitle,
+                          { color: navColors.text },
+                        ]}
+                      >
+                        {getDisplayName(files[selectedFileIndex])}
+                      </Text>
+                      <Text
+                        style={[styles.documentType, { color: navColors.text }]}
+                      >
+                        {files[selectedFileIndex].type === "application/pdf"
+                          ? "PDF Document"
+                          : "Document"}
+                      </Text>
+                    </View>
+                  )}
+                </>
+              )}{" "}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleModalClose}
+              >
+                <MaterialCommunityIcons name="close" size={24} color="white" />
+              </TouchableOpacity>
+            </View>{" "}
+          </TouchableOpacity>
+        </View>
+      </Modal>
+      {/* Store Bottom Sheet */}
+      <StoreBottomSheet
+        visible={storeVisible}
+        onClose={() => setStoreVisible(false)}
+        onSelectItems={onSelectItems}
+        selectedItems={selectedItems}
+      />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: 16, // Uniform padding for the scroll content
-    paddingBottom: 80, // Ensure space for progress bar if it's fixed at bottom
-  },
-  alertContainer: {
-    width: "100%",
-    alignItems: "center", // Center children horizontally
-    marginBottom: 10,
-  },
+  // Upload progress styles - simplified since we're using Card component
   uploadProgressContainer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
     zIndex: 10,
   },
-  uploadProgressContent: {
-    width: "100%",
+  // File preview modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
   },
-  uploadProgressHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 10,
+  modalOverlay: {
+    flex: 1,
     justifyContent: "center",
-  },
-  progressBarWithPercentage: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-  },
-  percentageContainer: {
-    marginLeft: 10,
-    minWidth: 40,
     alignItems: "center",
   },
-  // Removed card style from here as it's handled by Card component + inline styles
   modalContent: {
-    // Kept for reference if Dialog styling needs direct StyleSheet
-    padding: 20,
-    borderRadius: 10,
+    width: screenWidth * 0.95,
+    height: screenHeight * 0.8,
+    position: "relative",
+  },
+  fullScreenImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 12,
+  },
+  documentPreview: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    width: "90%",
-    maxHeight: "80%",
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 12,
+    padding: 20,
+  },
+  documentTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 16,
+    textAlign: "center",
+    fontFamily: "Staatliches",
+  },
+  documentType: {
+    fontSize: 14,
+    opacity: 0.7,
+    marginTop: 8,
+    textAlign: "center",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 20,
+    right: 20,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    borderRadius: 20,
+    padding: 8,
+    zIndex: 10,
   },
 });
 

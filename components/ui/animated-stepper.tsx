@@ -842,8 +842,8 @@ const AnimatedStepper: React.FC<AnimatedStepperProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 10,
-    paddingVertical: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
     width: "100%",
     // Enhanced darker shadows for iOS
     shadowColor: "#000",
